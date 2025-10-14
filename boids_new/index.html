@@ -16,7 +16,7 @@
         left: 0; 
         bottom: 0; 
         right: 0;
-        backdrop-filter: blur(23px); /* 高斯模糊效果，可调节blur数值来控制模糊程度 */
+        backdrop-filter: blur(13px); /* 高斯模糊效果，可调节blur数值来控制模糊程度 */
         z-index: 1;
         pointer-events: none; /* 确保不影响鼠标交互 */
     }
@@ -26,8 +26,7 @@
 
   <div id="boids-wrapper">
     <canvas id="boids"></canvas>
-	<div id="boids-controls-container" > 
-		<!-- style="display: none;" -->
+	<div id="boids-controls-container" >
 		<div id="mobile-boids-controls">
 			<button id="introversion-mobile">Introversion</button>
 			<button id="speed-mobile">Speed</button>

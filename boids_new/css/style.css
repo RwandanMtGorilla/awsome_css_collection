@@ -371,3 +371,10 @@ input::-moz-focus-inner {
     display: none;
   }
 }
+
+/* 给 canvas 容器添加高对比度滤镜 */
+#boids-wrapper {
+    position: relative;
+    filter: contrast(1.5);
+}
+

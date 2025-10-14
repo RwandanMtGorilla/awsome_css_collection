@@ -144,13 +144,13 @@ var collisions = false;
 
 // Set number of boids based on browser and screen size
 if (firefox) {
-  var maxBoids = 250;
+  var maxBoids = 25;
 } else if (mobile) {
-  var maxBoids = 150;
+  var maxBoids = 15;
 } else {
-  var maxBoids = 500;
+  var maxBoids = 30;
 }
-var minBoids = 250;
+var minBoids = 20;
 var numBoids = Math.sqrt(canvas.width * canvas.height) / 2;
 if ( numBoids > maxBoids ) {
   numBoids = maxBoids;
@@ -160,12 +160,12 @@ if ( numBoids > maxBoids ) {
 
 // Set possible radii  based on screen size
 var radius;
-if ( size.width / 288 > 5 ) {
-  radius = 15;
-} else if ( size.width / 288 < 3) {
-  radius = 9;
+if ( size.width / 28 > 50 ) {
+  radius = 150;
+} else if ( size.width / 28 < 30) {
+  radius = 90;
 } else {
-  radius = size.width / 288 * 3;
+  radius = size.width / 28 * 30;
 }
 var radiusCoefficients = [.5,.6,.7,.8,1];
 
@@ -256,30 +256,29 @@ function createBoids() {
 function animate() {
   requestAnimationFrame(animate);
 
-  // Calc elapsed time since last loop
   now = Date.now();
   elapsed = now - then;
 
-  // FPS Reporting
   fpsReport++;
   if (fpsReport > 60) {
     fpsNum.innerHTML = Math.floor(1000/elapsed);
     fpsReport = 0;
   }
 
-  // If enough time has elapsed, draw the next frame
   if (elapsed > fpsInterval) {
-      // Get ready for next frame by setting then=now, but also adjust for your
-      // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
       then = now - (elapsed % fpsInterval);
-      // Drawing Code
+
+      // 清除画布时确保没有滤镜
+      c.filter = 'none';
       c.clearRect(0, 0, canvas.width, canvas.height);
-      // Update all boids
+
+      // 更新所有 boids
       for (var i = 0; i < boids.length; i++ ) {
         boids[i].update();
       }
   }
 }
+
 
 // Setup animation
 var stop = false;

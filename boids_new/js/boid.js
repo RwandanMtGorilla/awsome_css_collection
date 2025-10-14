@@ -316,11 +316,13 @@ class Boid {
    *
    */
   draw(){
+      c.filter = 'blur(80px)';
     c.beginPath();
     c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, false);
     c.fillStyle = this.color;
     c.fill();
     c.closePath();
+    c.filter = 'none';
   }
 
   /**
