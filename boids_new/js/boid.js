@@ -1,3 +1,4 @@
+let globalBlurRadius = 80;
 class Boid {
 
   /**
@@ -249,15 +250,15 @@ class Boid {
    *
    */
   borderWrap() {
-    if (this.position.x < -this.radius) {
-      this.position.x = document.body.clientWidth + this.radius;
-    } else if ( this.position.x > document.body.clientWidth + this.radius ) {
-      this.position.x = -this.radius;
+    if (this.position.x < -this.radius - globalBlurRadius) {
+      this.position.x = document.body.clientWidth + this.radius + globalBlurRadius;
+    } else if ( this.position.x > document.body.clientWidth + this.radius + globalBlurRadius ) {
+      this.position.x = -this.radius - globalBlurRadius;
     }
-    if (this.position.y < -this.radius) {
-      this.position.y = document.body.clientHeight + this.radius;
-    } else if ( this.position.y > document.body.clientHeight + this.radius ) {
-      this.position.y = -this.radius;
+    if (this.position.y < -this.radius - globalBlurRadius) {
+      this.position.y = document.body.clientHeight + this.radius + globalBlurRadius;
+    } else if ( this.position.y > document.body.clientHeight + this.radius + globalBlurRadius) {
+      this.position.y = -this.radius - globalBlurRadius;
     }
   }
 
@@ -315,8 +316,10 @@ class Boid {
    * Draw Boid to the canvas
    *
    */
+
+
   draw(){
-      c.filter = 'blur(80px)';
+    c.filter = `blur(${globalBlurRadius}px)`;
     c.beginPath();
     c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, false);
     c.fillStyle = this.color;

@@ -83,7 +83,7 @@ table{
   max-width: 100vw;
   overflow: hidden;
   background-image: linear-gradient(to right, #6647A9, #5553FF);
-  /* background-color: #222; */
+   /*background-color: #000;*/
   color: #fafafa;
   color: rgba(255,255,255,.9);
   font-family: arial;
