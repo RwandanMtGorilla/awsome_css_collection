@@ -249,15 +249,15 @@ class Boid {
    *
    */
   borderWrap() {
-    if (this.position.x < 0) {
-      this.position.x = document.body.clientWidth;
-    } else if ( this.position.x > document.body.clientWidth ) {
-      this.position.x = 0;
+    if (this.position.x < -this.radius) {
+      this.position.x = document.body.clientWidth + this.radius;
+    } else if ( this.position.x > document.body.clientWidth + this.radius ) {
+      this.position.x = -this.radius;
     }
-    if (this.position.y < 0) {
-      this.position.y = document.body.clientHeight;
-    } else if ( this.position.y > document.body.clientHeight ) {
-      this.position.y = 0;
+    if (this.position.y < -this.radius) {
+      this.position.y = document.body.clientHeight + this.radius;
+    } else if ( this.position.y > document.body.clientHeight + this.radius ) {
+      this.position.y = -this.radius;
     }
   }
 
