@@ -184,10 +184,10 @@ var radiusCoefficients = [.5,.6,.7,.8,1];
 var colors = ['#5553FF', '#5A5CFF', '#9270E3', '#6E80FF', '#7389FF','#6666FF','#9900FF','#B221FB'];
 
 
-var diversity = 8;
+var diversity = 6;
 var quickness = 1;
-var introversion = .5;
-var racism = 1;
+var introversion = 0;
+var racism = 1.5;
 var speedIndex;
 if ( size.width / 160 < 5 ) {
   speedIndex = 5;
