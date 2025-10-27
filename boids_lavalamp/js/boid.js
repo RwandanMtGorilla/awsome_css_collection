@@ -12,6 +12,7 @@ class Boid {
     // Initial Properties
     this.id = boid.id;
     this.position = new Victor( boid.x, boid.y );
+    this.radiusCoefficient = boid.radiusCoefficient; // 保存系数索引
     this.radius = boid.radius * radiusCoefficients[ boid.radiusCoefficient ];
     this.introversionCoefficient = boid.introversionCoefficient;
     this.introversion = boid.introversion * this.introversionCoefficient;

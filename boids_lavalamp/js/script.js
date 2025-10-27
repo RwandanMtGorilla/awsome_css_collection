@@ -158,15 +158,37 @@ if ( numBoids > maxBoids ) {
   numBoids = minBoids;
 }
 
-// Set possible radii  based on screen size
-var radius;
-if ( size.width / 28 > 50 ) {
-  radius = 150;
-} else if ( size.width / 28 < 30) {
-  radius = 90;
-} else {
-  radius = size.width / 28 * 30;
+// 获取浏览器缩放级别
+function getZoomLevel() {
+  // 通过比较 window.outerWidth 和 window.innerWidth 来估算缩放级别
+  // 或者使用 devicePixelRatio 结合 screen.width 和 window.innerWidth
+  var zoom = window.devicePixelRatio || 1;
+
+  // 另一种更准确的方法：通过实际像素和 CSS 像素的比率
+  if (window.outerWidth) {
+    zoom = window.outerWidth / window.innerWidth;
+  }
+
+  return zoom;
 }
+
+var zoomLevel = getZoomLevel();
+
+// Set possible radii based on screen size and zoom level
+var radius;
+var baseRadius;
+if ( size.width / 28 > 50 ) {
+  baseRadius = 150;
+} else if ( size.width / 28 < 30) {
+  baseRadius = 90;
+} else {
+  baseRadius = size.width / 28 * 30;
+}
+
+// 根据缩放级别调整半径，使视觉大小保持一致
+// 缩放级别越大，实际半径应该越小
+radius = baseRadius / Math.sqrt(zoomLevel);
+
 var radiusCoefficients = [.5,.6,.7,.8,1];
 
 // Boid Attributes
@@ -188,14 +210,21 @@ var diversity = 6;
 var quickness = 1;
 var introversion = 0;
 var racism = 1.5;
-var speedIndex;
+
+// 计算基础速度
+var baseSpeedIndex;
 if ( size.width / 160 < 5 ) {
-  speedIndex = 5;
+  baseSpeedIndex = 5;
 } else if ( size.width / 180 > 8 ) {
-  speedIndex = 9;
+  baseSpeedIndex = 9;
 } else {
-  speedIndex = size.width / 180;
+  baseSpeedIndex = size.width / 180;
 }
+
+// 根据缩放级别调整速度
+// 以 50% 缩放（zoomLevel = 0.5）为基准
+// 缩放比例越小速度越快，缩放比例越大速度越慢
+var speedIndex = baseSpeedIndex * (0.5 / zoomLevel);
 
 // Create Boids Array
 var boids = [];
@@ -327,6 +356,35 @@ addEventListener('resize', function(){
   canvas.height = innerHeight;
   center.x = size.width/ 2;
   center.y = size.height / 2;
+
+  // 重新计算缩放级别和半径
+  zoomLevel = getZoomLevel();
+  if ( size.width / 28 > 50 ) {
+    baseRadius = 150;
+  } else if ( size.width / 28 < 30) {
+    baseRadius = 90;
+  } else {
+    baseRadius = size.width / 28 * 30;
+  }
+  radius = baseRadius / Math.sqrt(zoomLevel);
+
+  // 重新计算速度
+  if ( size.width / 160 < 5 ) {
+    baseSpeedIndex = 5;
+  } else if ( size.width / 180 > 8 ) {
+    baseSpeedIndex = 9;
+  } else {
+    baseSpeedIndex = size.width / 180;
+  }
+  speedIndex = baseSpeedIndex * (0.5 / zoomLevel);
+
+  // 更新所有现有 boids 的半径和速度
+  for (var i = 0; i < boids.length; i++) {
+    boids[i].radius = radius * radiusCoefficients[ boids[i].radiusCoefficient ];
+    boids[i].mass = (4/3) * Math.PI * Math.pow( boids[i].radius, 3 );
+    boids[i].maxSpeed = speedIndex * boids[i].quickness;
+  }
+
   if ( innerWidth >= 1000 && ! mobile ) {
     document.getElementById('mobile-boids-controls').style.display = 'none';
   } else {
