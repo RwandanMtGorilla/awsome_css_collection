@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可伸缩侧边栏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+
+        /* 左侧区域 */
+        .left-section {
+            display: flex;
+            flex-shrink: 0;
+        }
+
+        /* 左侧图标栏 */
+        .left-icon-bar {
+            width: 48px;
+            background-color: #2b2b2b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            gap: 8px;
+        }
+
+        /* 左侧内容面板 */
+        .left-sidebar {
+            width: 0;
+            background-color: #3c3f41;
+            color: #bbbbbb;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .left-sidebar.open {
+            width: 250px;
+        }
+
+        /* 右侧区域 */
+        .right-section {
+            display: flex;
+            flex-shrink: 0;
+            flex-direction: row-reverse;
+        }
+
+        /* 右侧图标栏 */
+        .right-icon-bar {
+            width: 48px;
+            background-color: #2b2b2b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            gap: 8px;
+        }
+
+        /* 右侧内容面板 */
+        .right-sidebar {
+            width: 0;
+            background-color: #3c3f41;
+            color: #bbbbbb;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .right-sidebar.open {
+            width: 250px;
+        }
+
+        /* 图标按钮样式 */
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            background-color: #3c3f41;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #bbbbbb;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background-color: #4e5254;
+        }
+
+        .icon-btn.active {
+            background-color: #4a88c7;
+            color: white;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .content-box {
+            flex: 1;
+            margin: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            overflow: auto;
+        }
+
+        .content-box h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .content-box p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        /* 侧边栏内容 */
+        .sidebar-content {
+            padding: 15px;
+            height: 100%;
+            overflow-y: auto;
+            min-width: 250px;
+        }
+
+        .sidebar-content h3 {
+            margin-bottom: 15px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .sidebar-item {
+            background-color: #2b2b2b;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #4a88c7;
+        }
+
+        .sidebar-item p {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #bbbbbb;
+        }
+
+        /* 拖动手柄 */
+        .resize-handle {
+            width: 4px;
+            background-color: transparent;
+            cursor: col-resize;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+
+        .resize-handle:hover,
+        .resize-handle.dragging {
+            background-color: #4a88c7;
+        }
+
+        .left-sidebar .resize-handle {
+            right: 0;
+        }
+
+        .right-sidebar .resize-handle {
+            left: 0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .left-sidebar.open,
+            .right-sidebar.open {
+                width: 200px;
+            }
+
+            .content-box {
+                margin: 10px;
+                padding: 20px;
+            }
+
+            .icon-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+
+            .left-icon-bar,
+            .right-icon-bar {
+                width: 40px;
+            }
+        }
+
+        /* 滚动条美化 */
+        .sidebar-content::-webkit-scrollbar,
+        .content-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-track {
+            background: #2b2b2b;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧区域 -->
+        <div class="left-section">
+            <!-- 左侧图标栏 -->
+            <div class="left-icon-bar">
+                <button class="icon-btn" data-side="left" data-panel="files">📁</button>
+                <button class="icon-btn" data-side="left" data-panel="search">🔍</button>
+                <button class="icon-btn" data-side="left" data-panel="git">🌿</button>
+                <button class="icon-btn" data-side="left" data-panel="settings">⚙️</button>
+            </div>
+
+            <!-- 左侧内容面板 -->
+            <div class="left-sidebar" id="leftSidebar">
+                <div class="resize-handle" data-side="left"></div>
+                <div class="sidebar-content" id="leftContent">
+                    <!-- 动态内容将在这里显示 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <div class="content-box">
+                <h1>欢迎使用可伸缩侧边栏系统</h1>
+                <p>这是一个类似 PyCharm IDE 的侧边栏布局系统，具有以下特性：</p>
+                <p><strong>✨ 核心功能：</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 15px; line-height: 1.8;">
+                    <li>左右两侧都有细长的图标栏，包含多个功能按钮</li>
+                    <li>点击图标按钮可以展开/收起对应的侧边栏面板</li>
+                    <li>同一侧只能有一个按钮处于激活状态</li>
+                    <li>侧边栏可以通过拖动边缘来调整宽度</li>
+                    <li>所有内容都是响应式的，自动适应窗口大小</li>
+                </ul>
+                <p><strong>🎯 使用说明：</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 15px; line-height: 1.8;">
+                    <li>点击左侧或右侧的图标按钮来展开对应面板</li>
+                    <li>再次点击同一个按钮可以收起面板</li>
+                    <li>点击其他按钮会切换到新的面板</li>
+                    <li>鼠标悬停在侧边栏边缘，光标会变成调整大小图标</li>
+                    <li>按住鼠标左键并拖动，可以调整侧边栏宽度</li>
+                    <li>侧边栏内容有最小宽度（150px）限制，拖动变窄时内容会被边框遮盖</li>
+                </ul>
+                <p style="margin-top: 30px; color: #999; font-size: 14px;">
+                    💡 提示：试试点击左右两侧的图标按钮，体验流畅的侧边栏交互效果！
+                </p>
+            </div>
+        </div>
+
+        <!-- 右侧区域 -->
+        <div class="right-section">
+            <!-- 右侧图标栏 -->
+            <div class="right-icon-bar">
+                <button class="icon-btn" data-side="right" data-panel="notifications">🔔</button>
+                <button class="icon-btn" data-side="right" data-panel="tasks">📋</button>
+                <button class="icon-btn" data-side="right" data-panel="terminal">💻</button>
+                <button class="icon-btn" data-side="right" data-panel="database">🗄️</button>
+            </div>
+
+            <!-- 右侧内容面板 -->
+            <div class="right-sidebar" id="rightSidebar">
+                <div class="resize-handle" data-side="right"></div>
+                <div class="sidebar-content" id="rightContent">
+                    <!-- 动态内容将在这里显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 侧边栏内容数据
+        const sidebarData = {
+            left: {
+                files: {
+                    title: '文件浏览器',
+                    items: [
+                        { text: 'src 文件夹 - 包含所有源代码文件' },
+                        { text: 'components 组件目录 - React/Vue 组件' },
+                        { text: 'utils 工具函数 - 通用工具方法' },
+                        { text: 'assets 资源文件 - 图片、字体等静态资源' },
+                        { text: 'styles 样式文件 - CSS/SCSS 样式表' }
+                    ]
+                },
+                search: {
+                    title: '搜索功能',
+                    items: [
+                        { text: '全局搜索 - 在整个项目中搜索文本' },
+                        { text: '文件查找 - 按文件名快速定位文件' },
+                        { text: '正则搜索 - 使用正则表达式进行高级搜索' },
+                        { text: '替换功能 - 批量替换文本内容' }
+                    ]
+                },
+                git: {
+                    title: 'Git 版本控制',
+                    items: [
+                        { text: '未提交的更改 - 查看工作区修改' },
+                        { text: '分支管理 - 创建、切换、合并分支' },
+                        { text: '提交历史 - 浏览项目提交记录' },
+                        { text: '远程仓库 - Push/Pull 代码同步' },
+                        { text: '冲突解决 - 处理合并冲突' }
+                    ]
+                },
+                settings: {
+                    title: '设置选项',
+                    items: [
+                        { text: '编辑器设置 - 字体、主题、缩进等' },
+                        { text: '快捷键配置 - 自定义键盘快捷键' },
+                        { text: '插件管理 - 安装和管理扩展插件' },
+                        { text: '项目配置 - 项目特定的设置' }
+                    ]
+                }
+            },
+            right: {
+                notifications: {
+                    title: '通知中心',
+                    items: [
+                        { text: '系统通知 - 重要的系统消息和警告' },
+                        { text: '构建完成 - 项目编译构建状态通知' },
+                        { text: '错误提示 - 代码错误和警告信息' },
+                        { text: '更新提醒 - 软件和依赖包更新提示' }
+                    ]
+                },
+                tasks: {
+                    title: '任务列表',
+                    items: [
+                        { text: '待办事项 - 需要完成的开发任务' },
+                        { text: '代码审查 - 等待审查的代码变更' },
+                        { text: '修复 Bug - 已知问题和缺陷列表' },
+                        { text: '新功能 - 计划开发的新特性' },
+                        { text: '优化项 - 性能和代码质量改进' }
+                    ]
+                },
+                terminal: {
+                    title: '终端控制台',
+                    items: [
+                        { text: '本地终端 - 执行系统命令' },
+                        { text: '调试控制台 - 调试输出和日志' },
+                        { text: 'npm 脚本 - 运行 package.json 中的脚本' },
+                        { text: 'SSH 连接 - 远程服务器终端会话' }
+                    ]
+                },
+                database: {
+                    title: '数据库工具',
+                    items: [
+                        { text: '数据库连接 - 配置和管理数据库连接' },
+                        { text: 'SQL 编辑器 - 编写和执行 SQL 查询' },
+                        { text: '表结构查看 - 浏览数据库表和字段' },
+                        { text: '数据导入导出 - 数据备份和迁移工具' }
+                    ]
+                }
+            }
+        };
+
+        // 当前激活的按钮
+        let activeButtons = {
+            left: null,
+            right: null
+        };
+
+        // 所有按钮
+        const buttons = document.querySelectorAll('.icon-btn');
+
+        // 按钮点击事件
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const side = this.dataset.side;
+                const panel = this.dataset.panel;
+                const sidebar = document.getElementById(`${side}Sidebar`);
+                const content = document.getElementById(`${side}Content`);
+
+                // 如果点击的是当前激活的按钮，则关闭侧边栏
+                if (activeButtons[side] === this) {
+                    this.classList.remove('active');
+                    sidebar.classList.remove('open');
+                    activeButtons[side] = null;
+                } else {
+                    // 移除同侧其他按钮的激活状态
+                    if (activeButtons[side]) {
+                        activeButtons[side].classList.remove('active');
+                    }
+
+                    // 激活当前按钮
+                    this.classList.add('active');
+                    sidebar.classList.add('open');
+                    activeButtons[side] = this;
+
+                    // 更新侧边栏内容
+                    updateSidebarContent(side, panel);
+                }
+            });
+        });
+
+        // 更新侧边栏内容
+        function updateSidebarContent(side, panel) {
+            const content = document.getElementById(`${side}Content`);
+            const data = sidebarData[side][panel];
+
+            let html = `<h3>${data.title}</h3>`;
+            data.items.forEach(item => {
+                html += `
+                    <div class="sidebar-item">
+                        <p>${item.text}</p>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
+        }
+
+        // 拖动调整侧边栏宽度
+        const resizeHandles = document.querySelectorAll('.resize-handle');
+
+        resizeHandles.forEach(handle => {
+            let isResizing = false;
+            let sidebar = null;
+            let startX = 0;
+            let startWidth = 0;
+            const side = handle.dataset.side;
+
+            handle.addEventListener('mousedown', function(e) {
+                // 只有当侧边栏打开时才允许调整大小
+                sidebar = document.getElementById(`${side}Sidebar`);
+                if (!sidebar.classList.contains('open')) return;
+
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = sidebar.offsetWidth;
+                handle.classList.add('dragging');
+
+                // 阻止文本选择
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+
+                let newWidth;
+                if (side === 'left') {
+                    newWidth = startWidth + (e.clientX - startX);
+                } else {
+                    newWidth = startWidth - (e.clientX - startX);
+                }
+
+                // 限制最小和最大宽度
+                newWidth = Math.max(10, Math.min(newWidth, 600));
+
+                // 暂时禁用过渡效果以实现流畅拖动
+                sidebar.style.transition = 'none';
+                sidebar.style.width = newWidth + 'px';
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    handle.classList.remove('dragging');
+
+                    // 恢复过渡效果
+                    if (sidebar) {
+                        sidebar.style.transition = 'width 0.3s ease';
+                    }
+                }
+            });
+        });
+
+        // 阻止拖动时的默认行为
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>
