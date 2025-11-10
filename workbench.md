@@ -1263,3 +1263,33 @@ bug: 拖动侧边栏大小之后 无法收起了
 
 现在，请仔细思考，细致拆分任务，逐步认真完成
 
+####
+请仔细阅读 dynamic_sidebar/index.html
+现在需要实现:
+1. 允许两侧icon在左上 左下 右上 右下 四个位置间拖动
+2. 拖动时 如果其处于激活状态 则取消该侧边栏在原本位置的显示 而是在新位置显示
+3. 拖动时理应允许其被添加到任何两个icon之间或前后 未松开鼠标时 应当有标识其松手后将被放置到的位置
+
+现在，仔细思考，此功能较为复杂 需要细致拆分任务，逐步认真完成
+
+在dynamic_sidebar/index.html里 
+存在bug
+1. 目前拖拽放置的 有效位置过小 建议在横轴上扩大可放置的范围 使得横轴上稍微一点偏移也不影响其放置
+2. 在某个区域没有icon时 无法拖拽其他icon到这个区域里了
+现在，请仔细思考，拆分任务，逐步认真修复以上提到的BUG
+
+又发现一个bug 在将某个已经按下的按钮拖拽到对面侧时 会出现无法正常放下的情况 
+并出现报错: 
+index.html:623 Uncaught TypeError: Cannot read properties of undefined (reading 'title')
+    at updateSidebarContent (index.html:623:36)
+    at moveButton (index.html:1080:17)
+    at finishDragging (index.html:1004:17)
+    at HTMLDocument.<anonymous> (index.html:852:17)
+updateSidebarContent	@	index.html:623
+moveButton	@	index.html:1080
+finishDragging	@	index.html:1004
+(anonymous)	@	index.html:852
+
+现在，请仔细思考，拆分任务，逐步认真修复以上提到的BUG
+
+不对 现在出了更大的问题 不论是否激活的按钮 拖到对面侧后 都无法正常激活 并提示 Panel "terminal" does not exist in "left" side

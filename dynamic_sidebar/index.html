@@ -104,13 +104,14 @@
             background-color: #3c3f41;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
+            cursor: grab;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #bbbbbb;
             font-size: 18px;
             transition: all 0.2s;
+            user-select: none;
         }
 
         .icon-btn:hover {
@@ -120,6 +121,51 @@
         .icon-btn.active {
             background-color: #4a88c7;
             color: white;
+        }
+
+        .icon-btn.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        /* 拖动时的幽灵图标 */
+        .drag-ghost {
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            background-color: #4a88c7;
+            border: 2px solid #6aa8e7;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0.9;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translate(-50%, -50%);
+        }
+
+        /* 拖动占位符 */
+        .drop-indicator {
+            width: 36px;
+            height: 4px;
+            background-color: #4a88c7;
+            border-radius: 2px;
+            margin: 4px 0;
+            opacity: 0.8;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 0.4;
+            }
         }
 
         /* 主内容区域 */
@@ -511,9 +557,36 @@
         // 所有按钮
         const buttons = document.querySelectorAll('.icon-btn');
 
-        // 按钮点击事件
+        // 拖动状态
+        let dragState = {
+            isDragging: false,
+            draggedButton: null,
+            dragGhost: null,
+            dropIndicator: null,
+            startX: 0,
+            startY: 0,
+            dragThreshold: 5, // pixel threshold to start drag
+            hasMoved: false
+        };
+
+        // 按钮点击和拖动事件
         buttons.forEach(button => {
-            button.addEventListener('click', function() {
+            // 鼠标按下事件 - 准备拖动
+            button.addEventListener('mousedown', function(e) {
+                dragState.draggedButton = this;
+                dragState.startX = e.clientX;
+                dragState.startY = e.clientY;
+                dragState.hasMoved = false;
+                e.preventDefault();
+            });
+
+            // 点击事件(当没有拖动时触发)
+            button.addEventListener('click', function(e) {
+                // 如果触发了拖动, 不执行点击逻辑
+                if (dragState.hasMoved) {
+                    return;
+                }
+
                 const side = this.dataset.side;
                 const position = this.dataset.position; // 'top' or 'bottom'
                 const panel = this.dataset.panel;
@@ -545,6 +618,13 @@
         function updateSidebarContent(side, position, panel) {
             const contentId = `${side}Content${position.charAt(0).toUpperCase() + position.slice(1)}`;
             const content = document.getElementById(contentId);
+
+            // 检查数据是否存在
+            if (!sidebarData[side] || !sidebarData[side][panel]) {
+                console.warn(`Panel "${panel}" does not exist in "${side}" side`);
+                return;
+            }
+
             const data = sidebarData[side][panel];
 
             let html = `<h3>${data.title}</h3>`;
@@ -754,6 +834,334 @@
                 }
             });
         });
+
+        // 全局鼠标移动事件 - 处理拖动
+        document.addEventListener('mousemove', function(e) {
+            if (!dragState.draggedButton) return;
+
+            const deltaX = Math.abs(e.clientX - dragState.startX);
+            const deltaY = Math.abs(e.clientY - dragState.startY);
+
+            // 检查是否超过拖动阈值
+            if (!dragState.isDragging && (deltaX > dragState.dragThreshold || deltaY > dragState.dragThreshold)) {
+                startDragging(e);
+            }
+
+            if (dragState.isDragging) {
+                updateDragGhost(e);
+                updateDropIndicator(e);
+            }
+        });
+
+        // 全局鼠标释放事件 - 完成拖动
+        document.addEventListener('mouseup', function(e) {
+            if (dragState.isDragging) {
+                finishDragging(e);
+            } else {
+                // 重置状态
+                dragState.draggedButton = null;
+            }
+        });
+
+        // 开始拖动
+        function startDragging(e) {
+            dragState.isDragging = true;
+            dragState.hasMoved = true;
+
+            // 添加拖动样式
+            dragState.draggedButton.classList.add('dragging');
+
+            // 创建幽灵图标
+            const ghost = document.createElement('div');
+            ghost.className = 'drag-ghost';
+            ghost.textContent = dragState.draggedButton.textContent;
+            document.body.appendChild(ghost);
+            dragState.dragGhost = ghost;
+
+            // 创建放置指示器
+            const indicator = document.createElement('div');
+            indicator.className = 'drop-indicator';
+            dragState.dropIndicator = indicator;
+
+            updateDragGhost(e);
+        }
+
+        // 更新幽灵图标位置
+        function updateDragGhost(e) {
+            if (dragState.dragGhost) {
+                dragState.dragGhost.style.left = e.clientX + 'px';
+                dragState.dragGhost.style.top = e.clientY + 'px';
+            }
+        }
+
+        // 更新放置指示器位置
+        function updateDropIndicator(e) {
+            if (!dragState.dropIndicator) return;
+
+            // 获取鼠标位置下的目标位置
+            const dropTarget = getDropTarget(e);
+
+            // 移除现有的指示器
+            if (dragState.dropIndicator.parentNode) {
+                dragState.dropIndicator.remove();
+            }
+
+            if (dropTarget) {
+                if (dropTarget.isEmpty) {
+                    // 空分组: 将指示器放在分组中间
+                    dropTarget.element.appendChild(dragState.dropIndicator);
+                } else {
+                    // 有按钮的分组: 在目标按钮前后插入指示器
+                    if (dropTarget.before) {
+                        dropTarget.element.parentNode.insertBefore(dragState.dropIndicator, dropTarget.element);
+                    } else {
+                        dropTarget.element.parentNode.insertBefore(dragState.dropIndicator, dropTarget.element.nextSibling);
+                    }
+                }
+            }
+        }
+
+        // 获取放置目标位置
+        function getDropTarget(e) {
+            // 获取所有图标栏(左右两侧)
+            const leftIconBar = document.querySelector('.left-icon-bar');
+            const rightIconBar = document.querySelector('.right-icon-bar');
+            const iconBars = [leftIconBar, rightIconBar];
+
+            let closestTarget = null;
+            let closestDistance = Infinity;
+
+            iconBars.forEach(iconBar => {
+                const barRect = iconBar.getBoundingClientRect();
+
+                // 扩大横轴的有效范围: 左右各扩展 100px
+                const expandedLeft = barRect.left - 100;
+                const expandedRight = barRect.right + 100;
+
+                // 检查鼠标横轴是否在扩展后的图标栏范围内
+                if (e.clientX >= expandedLeft && e.clientX <= expandedRight) {
+                    // 获取该图标栏的上下两个分组
+                    const topGroup = iconBar.querySelector('.icon-group-top');
+                    const bottomGroup = iconBar.querySelector('.icon-group-bottom');
+                    const groups = [
+                        { element: topGroup, position: 'top' },
+                        { element: bottomGroup, position: 'bottom' }
+                    ];
+
+                    groups.forEach(({ element: group, position }) => {
+                        if (!group) return;
+
+                        const groupRect = group.getBoundingClientRect();
+                        const buttons = group.querySelectorAll('.icon-btn:not(.dragging)');
+
+                        if (buttons.length === 0) {
+                            // 空分组处理
+                            // 计算鼠标到分组区域的距离
+                            let distanceToGroup;
+
+                            if (e.clientY < groupRect.top) {
+                                distanceToGroup = groupRect.top - e.clientY;
+                            } else if (e.clientY > groupRect.bottom) {
+                                distanceToGroup = e.clientY - groupRect.bottom;
+                            } else {
+                                distanceToGroup = 0; // 鼠标在分组内
+                            }
+
+                            // 为空分组增加更大的容错范围(纵轴方向150px)
+                            if (distanceToGroup <= 150) {
+                                if (distanceToGroup < closestDistance) {
+                                    closestDistance = distanceToGroup;
+                                    closestTarget = {
+                                        element: group,
+                                        before: false,
+                                        isEmpty: true
+                                    };
+                                }
+                            }
+                        } else {
+                            // 有按钮的分组
+                            buttons.forEach(btn => {
+                                const btnRect = btn.getBoundingClientRect();
+                                const btnCenterY = btnRect.top + btnRect.height / 2;
+                                const distance = Math.abs(e.clientY - btnCenterY);
+
+                                if (distance < closestDistance) {
+                                    closestDistance = distance;
+                                    closestTarget = {
+                                        element: btn,
+                                        before: e.clientY < btnCenterY,
+                                        isEmpty: false
+                                    };
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            return closestTarget;
+        }
+
+        // 完成拖动
+        function finishDragging(e) {
+            const dropTarget = getDropTarget(e);
+
+            if (dropTarget) {
+                // 执行图标重新排列
+                moveButton(dragState.draggedButton, dropTarget);
+            }
+
+            // 清理拖动状态
+            if (dragState.dragGhost) {
+                dragState.dragGhost.remove();
+                dragState.dragGhost = null;
+            }
+
+            if (dragState.dropIndicator && dragState.dropIndicator.parentNode) {
+                dragState.dropIndicator.remove();
+            }
+            dragState.dropIndicator = null;
+
+            if (dragState.draggedButton) {
+                dragState.draggedButton.classList.remove('dragging');
+            }
+
+            dragState.isDragging = false;
+            dragState.draggedButton = null;
+        }
+
+        // 移动按钮到新位置
+        function moveButton(button, dropTarget) {
+            // 获取按钮原来的信息
+            const oldSide = button.dataset.side;
+            const oldPosition = button.dataset.position;
+            const wasActive = button.classList.contains('active');
+            const panel = button.dataset.panel;
+
+            // 确定新的side和position
+            let newSide, newPosition;
+
+            if (dropTarget.isEmpty) {
+                // 空分组
+                const group = dropTarget.element;
+                const iconBar = group.closest('.left-icon-bar, .right-icon-bar');
+                newSide = iconBar.classList.contains('left-icon-bar') ? 'left' : 'right';
+                newPosition = group.classList.contains('icon-group-top') ? 'top' : 'bottom';
+
+                // 移动按钮到空分组
+                group.appendChild(button);
+            } else {
+                // 有按钮的分组
+                const targetButton = dropTarget.element;
+                const group = targetButton.closest('.icon-group-top, .icon-group-bottom');
+                const iconBar = group.closest('.left-icon-bar, .right-icon-bar');
+                newSide = iconBar.classList.contains('left-icon-bar') ? 'left' : 'right';
+                newPosition = group.classList.contains('icon-group-top') ? 'top' : 'bottom';
+
+                // 移动按钮
+                if (dropTarget.before) {
+                    group.insertBefore(button, targetButton);
+                } else {
+                    group.insertBefore(button, targetButton.nextSibling);
+                }
+            }
+
+            // 更新按钮的数据属性
+            button.dataset.side = newSide;
+            button.dataset.position = newPosition;
+
+            // 处理激活状态变化
+            if (wasActive) {
+                // 清除旧位置的激活状态
+                activeButtons[oldSide][oldPosition] = null;
+                button.classList.remove('active');
+
+                // 检查该 panel 是否属于新的 side
+                const panelExistsInNewSide = sidebarData[newSide] && sidebarData[newSide][panel];
+
+                if (panelExistsInNewSide) {
+                    // panel 属于新的 side, 可以继续激活
+                    // 检查新位置是否已有激活按钮
+                    if (activeButtons[newSide][newPosition]) {
+                        activeButtons[newSide][newPosition].classList.remove('active');
+                    }
+
+                    // 设置新位置的激活状态
+                    button.classList.add('active');
+                    activeButtons[newSide][newPosition] = button;
+
+                    // 更新内容
+                    updateSidebarContent(newSide, newPosition, panel);
+                } else {
+                    // panel 不属于新的 side, 取消激活状态
+                    // 按钮已经被移除了 active 类
+                }
+
+                // 更新两侧的侧边栏状态
+                updateSidebarState(oldSide);
+                if (panelExistsInNewSide || oldSide !== newSide) {
+                    updateSidebarState(newSide);
+                }
+            }
+
+            // 保存按钮布局
+            saveButtonLayout();
+        }
+
+        // 保存按钮布局到localStorage
+        function saveButtonLayout() {
+            const layout = {
+                left: { top: [], bottom: [] },
+                right: { top: [], bottom: [] }
+            };
+
+            // 收集所有按钮的布局信息
+            document.querySelectorAll('.icon-btn').forEach(btn => {
+                const side = btn.dataset.side;
+                const position = btn.dataset.position;
+                const panel = btn.dataset.panel;
+
+                layout[side][position].push(panel);
+            });
+
+            try {
+                localStorage.setItem('buttonLayout', JSON.stringify(layout));
+            } catch (e) {
+                console.error('保存按钮布局失败', e);
+            }
+        }
+
+        // 从localStorage恢复按钮布局
+        function restoreButtonLayout() {
+            try {
+                const savedLayout = localStorage.getItem('buttonLayout');
+                if (!savedLayout) return;
+
+                const layout = JSON.parse(savedLayout);
+
+                // 重新组织按钮
+                Object.keys(layout).forEach(side => {
+                    Object.keys(layout[side]).forEach(position => {
+                        const panels = layout[side][position];
+                        const group = document.querySelector(`.${side}-icon-bar .icon-group-${position}`);
+
+                        panels.forEach(panel => {
+                            const button = document.querySelector(`.icon-btn[data-panel="${panel}"]`);
+                            if (button && group) {
+                                button.dataset.side = side;
+                                button.dataset.position = position;
+                                group.appendChild(button);
+                            }
+                        });
+                    });
+                });
+            } catch (e) {
+                console.error('恢复按钮布局失败', e);
+            }
+        }
+
+        // 页面加载时恢复布局
+        restoreButtonLayout();
 
         // 阻止拖动时的默认行为
         document.addEventListener('dragstart', function(e) {
