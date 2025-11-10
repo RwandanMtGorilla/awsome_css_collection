@@ -379,27 +379,39 @@
         <!-- 主内容区域 -->
         <div class="main-content">
             <div class="content-box">
-                <h1>欢迎使用可伸缩侧边栏系统</h1>
-                <p>这是一个类似 PyCharm IDE 的侧边栏布局系统，具有以下特性：</p>
-                <p><strong>✨ 核心功能：</strong></p>
-                <ul style="margin-left: 20px; margin-bottom: 15px; line-height: 1.8;">
-                    <li>左右两侧都有细长的图标栏，包含多个功能按钮</li>
-                    <li>点击图标按钮可以展开/收起对应的侧边栏面板</li>
-                    <li>同一侧只能有一个按钮处于激活状态</li>
-                    <li>侧边栏可以通过拖动边缘来调整宽度</li>
-                    <li>所有内容都是响应式的，自动适应窗口大小</li>
+                <h1>Dynamic Sidebar - 可拖拽侧边栏系统</h1>
+                <p>类似 PyCharm IDE 的可定制侧边栏布局系统</p>
+
+                <p><strong>✨ 核心特性</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+                    <li><strong>四区域布局:</strong> 左上, 左下, 右上, 右下四个独立区域</li>
+                    <li><strong>点击切换:</strong> 点击图标按钮展开/收起侧边栏面板</li>
+                    <li><strong>自由拖拽:</strong> 按钮可在四个区域间自由拖动重新排列</li>
+                    <li><strong>调整宽度:</strong> 拖动侧边栏边缘调整宽度(100-600px)</li>
+                    <li><strong>上下分区:</strong> 同侧可同时显示上下两个面板,拖动调整分区高度</li>
+                    <li><strong>状态持久化:</strong> 按钮布局, 侧边栏宽度, 分区高度自动保存到 localStorage</li>
                 </ul>
-                <p><strong>🎯 使用说明：</strong></p>
-                <ul style="margin-left: 20px; margin-bottom: 15px; line-height: 1.8;">
-                    <li>点击左侧或右侧的图标按钮来展开对应面板</li>
-                    <li>再次点击同一个按钮可以收起面板</li>
-                    <li>点击其他按钮会切换到新的面板</li>
-                    <li>鼠标悬停在侧边栏边缘，光标会变成调整大小图标</li>
-                    <li>按住鼠标左键并拖动，可以调整侧边栏宽度</li>
-                    <li>侧边栏内容有最小宽度（150px）限制，拖动变窄时内容会被边框遮盖</li>
+
+                <p><strong>🎯 操作指南</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+                    <li><strong>激活面板:</strong> 点击图标按钮, 再次点击收起</li>
+                    <li><strong>拖动按钮:</strong> 按住图标按钮拖动到其他区域, 会显示蓝色占位符提示</li>
+                    <li><strong>调整宽度:</strong> 悬停侧边栏边缘出现调整光标时拖动</li>
+                    <li><strong>调整分区:</strong> 当上下两个面板同时激活时,拖动中间分隔线调整高度</li>
+                    <li><strong>跨侧拖动:</strong> 激活状态的按钮拖到对侧后,内容会跟随到新位置</li>
                 </ul>
+
+                <p><strong>🔧 技术实现</strong></p>
+                <ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+                    <li>纯 HTML + CSS + Vanilla JavaScript, 无框架依赖</li>
+                    <li>拖拽阈值 5px, 区分点击和拖动</li>
+                    <li>横轴扩展 ±100px, 纵轴空区域容错 150px</li>
+                    <li>数据与位置解耦, 按钮可自由移动到任意位置</li>
+                    <li>响应式设计, 移动端适配</li>
+                </ul>
+
                 <p style="margin-top: 30px; color: #999; font-size: 14px;">
-                    💡 提示：试试点击左右两侧的图标按钮，体验流畅的侧边栏交互效果！
+                    💡 快速体验: 试试将左侧的"文件浏览器"图标拖到右下角!
                 </p>
             </div>
         </div>
