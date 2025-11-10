@@ -204,9 +204,12 @@
         .sidebar-content-bottom {
             padding: 15px;
             overflow-y: auto;
+            overflow-x: hidden; /* 防止水平溢出 */
             min-width: 250px;
             flex: 1;
             display: none;
+            position: relative; /* 为内部绝对定位元素提供参考 */
+            isolation: isolate; /* 创建独立的层叠上下文 */
         }
 
         /* 当区域有内容时显示 */
@@ -241,12 +244,109 @@
             margin-bottom: 10px;
             border-radius: 4px;
             border-left: 3px solid #4a88c7;
+            position: relative; /* 为内部组件提供定位上下文 */
         }
 
         .sidebar-item p {
             font-size: 13px;
             line-height: 1.5;
             color: #bbbbbb;
+            margin: 0; /* 移除默认边距,避免影响布局 */
+        }
+
+        /* 为复杂组件提供样式基础 */
+        .sidebar-item button,
+        .sidebar-item input,
+        .sidebar-item select,
+        .sidebar-item textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            background-color: #3c3f41;
+            border: 1px solid #555;
+            border-radius: 3px;
+            color: #bbbbbb;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .sidebar-item button {
+            cursor: pointer;
+            width: auto;
+        }
+
+        .sidebar-item button:hover {
+            background-color: #4e5254;
+            border-color: #4a88c7;
+        }
+
+        .sidebar-item input:focus,
+        .sidebar-item select:focus,
+        .sidebar-item textarea:focus {
+            border-color: #4a88c7;
+        }
+
+        /* 下拉菜单等弹出元素的支持 */
+        .sidebar-item .dropdown,
+        .sidebar-item .popover {
+            position: absolute;
+            z-index: 1000; /* 确保弹出元素在最上层 */
+            background-color: #3c3f41;
+            border: 1px solid #555;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 滑块/拉杆的基础样式 */
+        .sidebar-item input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #555;
+            outline: none;
+            padding: 0;
+        }
+
+        .sidebar-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4a88c7;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .sidebar-item input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #4a88c7;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        /* 复选框和单选框样式 */
+        .sidebar-item input[type="checkbox"],
+        .sidebar-item input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        /* label 样式 */
+        .sidebar-item label {
+            display: flex;
+            align-items: center;
+            color: #bbbbbb;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-item label:last-child {
+            margin-bottom: 0;
         }
 
         /* 拖动手柄 */
@@ -257,8 +357,10 @@
             position: absolute;
             top: 0;
             bottom: 0;
-            z-index: 10;
+            z-index: 100; /* 提高层级,避免被内容组件遮挡 */
             transition: background-color 0.2s;
+            /* 防止内容组件事件干扰 */
+            pointer-events: auto;
         }
 
         .resize-handle:hover,
@@ -280,12 +382,14 @@
             background-color: #2b2b2b;
             cursor: row-resize;
             position: relative;
-            z-index: 10;
+            z-index: 100; /* 提高层级,避免被内容组件遮挡 */
             transition: background-color 0.2s;
             display: none;
             flex-shrink: 0;
             border-top: 1px solid #1a1a1a;
             border-bottom: 1px solid #4a4a4a;
+            /* 防止内容组件事件干扰 */
+            pointer-events: auto;
         }
 
         .vertical-resize-handle.active {
@@ -469,8 +573,28 @@
             git: {
                 title: 'Git 版本控制',
                 items: [
-                    { text: '未提交的更改 - 查看工作区修改' },
-                    { text: '分支管理 - 创建、切换、合并分支' },
+                    {
+                        text: '未提交的更改',
+                        html: `
+                            <p>工作区有 3 个文件修改</p>
+                            <label><input type="checkbox" checked> script.js</label>
+                            <label><input type="checkbox"> style.css</label>
+                            <label><input type="checkbox"> index.html</label>
+                            <button>提交更改</button>
+                        `
+                    },
+                    {
+                        text: '分支管理',
+                        html: `
+                            <p>当前分支: main</p>
+                            <select>
+                                <option>main</option>
+                                <option>feature/sidebar</option>
+                                <option>bugfix/layout</option>
+                            </select>
+                            <button>切换分支</button>
+                        `
+                    },
                     { text: '提交历史 - 浏览项目提交记录' },
                     { text: '远程仓库 - Push/Pull 代码同步' },
                     { text: '冲突解决 - 处理合并冲突' }
@@ -479,7 +603,21 @@
             settings: {
                 title: '设置选项',
                 items: [
-                    { text: '编辑器设置 - 字体、主题、缩进等' },
+                    {
+                        text: '编辑器设置',
+                        html: `
+                            <label>
+                                字体大小
+                                <input type="range" min="10" max="24" value="14">
+                            </label>
+                            <label>
+                                <input type="checkbox" checked> 自动保存
+                            </label>
+                            <label>
+                                <input type="checkbox"> 显示空格
+                            </label>
+                        `
+                    },
                     { text: '快捷键配置 - 自定义键盘快捷键' },
                     { text: '插件管理 - 安装和管理扩展插件' },
                     { text: '项目配置 - 项目特定的设置' }
@@ -637,9 +775,11 @@
 
             let html = `<h3>${data.title}</h3>`;
             data.items.forEach(item => {
+                // 支持自定义 HTML 内容或简单文本
+                const content = item.html ? item.html : `<p>${item.text}</p>`;
                 html += `
                     <div class="sidebar-item">
-                        <p>${item.text}</p>
+                        ${content}
                     </div>
                 `;
             });
