@@ -36,8 +36,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: space-between;
             padding: 10px 0;
-            gap: 8px;
         }
 
         /* 左侧内容面板 */
@@ -47,6 +47,8 @@
             color: #bbbbbb;
             overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .left-sidebar.open {
@@ -67,8 +69,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: space-between;
             padding: 10px 0;
-            gap: 8px;
         }
 
         /* 右侧内容面板 */
@@ -78,10 +80,21 @@
             color: #bbbbbb;
             overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .right-sidebar.open {
             width: 250px;
+        }
+
+        /* 图标分组 */
+        .icon-group-top,
+        .icon-group-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
         }
 
         /* 图标按钮样式 */
@@ -140,15 +153,36 @@
             margin-bottom: 15px;
         }
 
-        /* 侧边栏内容 */
-        .sidebar-content {
+        /* 侧边栏上下内容区域 */
+        .sidebar-content-top,
+        .sidebar-content-bottom {
             padding: 15px;
-            height: 100%;
             overflow-y: auto;
             min-width: 250px;
+            flex: 1;
+            display: none;
         }
 
-        .sidebar-content h3 {
+        /* 当区域有内容时显示 */
+        .sidebar-content-top.active,
+        .sidebar-content-bottom.active {
+            display: block;
+        }
+
+        /* 当只有一个区域激活时占据全部空间 */
+        .sidebar-content-top.active.full-height,
+        .sidebar-content-bottom.active.full-height {
+            flex: 1;
+        }
+
+        /* 当两个区域都激活时按比例分配 */
+        .sidebar-content-top.active:not(.full-height),
+        .sidebar-content-bottom.active:not(.full-height) {
+            flex: 0 0 auto;
+        }
+
+        .sidebar-content-top h3,
+        .sidebar-content-bottom h3 {
             margin-bottom: 15px;
             color: #ffffff;
             font-size: 14px;
@@ -194,6 +228,31 @@
             left: 0;
         }
 
+        /* 垂直拖动手柄 (上下分区之间) */
+        .vertical-resize-handle {
+            height: 4px;
+            background-color: #2b2b2b;
+            cursor: row-resize;
+            position: relative;
+            z-index: 10;
+            transition: background-color 0.2s;
+            display: none;
+            flex-shrink: 0;
+            border-top: 1px solid #1a1a1a;
+            border-bottom: 1px solid #4a4a4a;
+        }
+
+        .vertical-resize-handle.active {
+            display: block;
+        }
+
+        .vertical-resize-handle:hover,
+        .vertical-resize-handle.dragging {
+            background-color: #4a88c7;
+            border-top: 1px solid #3a78b7;
+            border-bottom: 1px solid #5a98d7;
+        }
+
         /* 响应式设计 */
         @media (max-width: 768px) {
             .left-sidebar.open,
@@ -219,21 +278,25 @@
         }
 
         /* 滚动条美化 */
-        .sidebar-content::-webkit-scrollbar,
+        .sidebar-content-top::-webkit-scrollbar,
+        .sidebar-content-bottom::-webkit-scrollbar,
         .content-box::-webkit-scrollbar {
             width: 8px;
         }
 
-        .sidebar-content::-webkit-scrollbar-track {
+        .sidebar-content-top::-webkit-scrollbar-track,
+        .sidebar-content-bottom::-webkit-scrollbar-track {
             background: #2b2b2b;
         }
 
-        .sidebar-content::-webkit-scrollbar-thumb {
+        .sidebar-content-top::-webkit-scrollbar-thumb,
+        .sidebar-content-bottom::-webkit-scrollbar-thumb {
             background: #555;
             border-radius: 4px;
         }
 
-        .sidebar-content::-webkit-scrollbar-thumb:hover {
+        .sidebar-content-top::-webkit-scrollbar-thumb:hover,
+        .sidebar-content-bottom::-webkit-scrollbar-thumb:hover {
             background: #666;
         }
     </style>
@@ -244,17 +307,25 @@
         <div class="left-section">
             <!-- 左侧图标栏 -->
             <div class="left-icon-bar">
-                <button class="icon-btn" data-side="left" data-panel="files">📁</button>
-                <button class="icon-btn" data-side="left" data-panel="search">🔍</button>
-                <button class="icon-btn" data-side="left" data-panel="git">🌿</button>
-                <button class="icon-btn" data-side="left" data-panel="settings">⚙️</button>
+                <div class="icon-group-top">
+                    <button class="icon-btn" data-side="left" data-position="top" data-panel="files">📁</button>
+                    <button class="icon-btn" data-side="left" data-position="top" data-panel="search">🔍</button>
+                </div>
+                <div class="icon-group-bottom">
+                    <button class="icon-btn" data-side="left" data-position="bottom" data-panel="git">🌿</button>
+                    <button class="icon-btn" data-side="left" data-position="bottom" data-panel="settings">⚙️</button>
+                </div>
             </div>
 
             <!-- 左侧内容面板 -->
             <div class="left-sidebar" id="leftSidebar">
                 <div class="resize-handle" data-side="left"></div>
-                <div class="sidebar-content" id="leftContent">
-                    <!-- 动态内容将在这里显示 -->
+                <div class="sidebar-content-top" id="leftContentTop">
+                    <!-- 上方动态内容将在这里显示 -->
+                </div>
+                <div class="vertical-resize-handle" data-side="left"></div>
+                <div class="sidebar-content-bottom" id="leftContentBottom">
+                    <!-- 下方动态内容将在这里显示 -->
                 </div>
             </div>
         </div>
@@ -291,17 +362,25 @@
         <div class="right-section">
             <!-- 右侧图标栏 -->
             <div class="right-icon-bar">
-                <button class="icon-btn" data-side="right" data-panel="notifications">🔔</button>
-                <button class="icon-btn" data-side="right" data-panel="tasks">📋</button>
-                <button class="icon-btn" data-side="right" data-panel="terminal">💻</button>
-                <button class="icon-btn" data-side="right" data-panel="database">🗄️</button>
+                <div class="icon-group-top">
+                    <button class="icon-btn" data-side="right" data-position="top" data-panel="notifications">🔔</button>
+                    <button class="icon-btn" data-side="right" data-position="top" data-panel="tasks">📋</button>
+                </div>
+                <div class="icon-group-bottom">
+                    <button class="icon-btn" data-side="right" data-position="bottom" data-panel="terminal">💻</button>
+                    <button class="icon-btn" data-side="right" data-position="bottom" data-panel="database">🗄️</button>
+                </div>
             </div>
 
             <!-- 右侧内容面板 -->
             <div class="right-sidebar" id="rightSidebar">
                 <div class="resize-handle" data-side="right"></div>
-                <div class="sidebar-content" id="rightContent">
-                    <!-- 动态内容将在这里显示 -->
+                <div class="sidebar-content-top" id="rightContentTop">
+                    <!-- 上方动态内容将在这里显示 -->
+                </div>
+                <div class="vertical-resize-handle" data-side="right"></div>
+                <div class="sidebar-content-bottom" id="rightContentBottom">
+                    <!-- 下方动态内容将在这里显示 -->
                 </div>
             </div>
         </div>
@@ -391,10 +470,16 @@
             }
         };
 
-        // 当前激活的按钮
+        // 当前激活的按钮 - 现在分为上下两个区域
         let activeButtons = {
-            left: null,
-            right: null
+            left: {
+                top: null,
+                bottom: null
+            },
+            right: {
+                top: null,
+                bottom: null
+            }
         };
 
         // 保存侧边栏的自定义宽度
@@ -403,14 +488,24 @@
             right: null
         };
 
-        // 从localStorage加载保存的宽度
+        // 保存上下分区的高度比例(存储上部分的像素高度)
+        let splitHeights = {
+            left: null,
+            right: null
+        };
+
+        // 从localStorage加载保存的宽度和高度
         try {
-            const saved = localStorage.getItem('sidebarWidths');
-            if (saved) {
-                sidebarWidths = JSON.parse(saved);
+            const savedWidths = localStorage.getItem('sidebarWidths');
+            if (savedWidths) {
+                sidebarWidths = JSON.parse(savedWidths);
+            }
+            const savedHeights = localStorage.getItem('splitHeights');
+            if (savedHeights) {
+                splitHeights = JSON.parse(savedHeights);
             }
         } catch (e) {
-            console.error('加载侧边栏宽度失败:', e);
+            console.error('加载侧边栏配置失败', e);
         }
 
         // 所有按钮
@@ -420,45 +515,36 @@
         buttons.forEach(button => {
             button.addEventListener('click', function() {
                 const side = this.dataset.side;
+                const position = this.dataset.position; // 'top' or 'bottom'
                 const panel = this.dataset.panel;
-                const sidebar = document.getElementById(`${side}Sidebar`);
-                const content = document.getElementById(`${side}Content`);
 
-                // 如果点击的是当前激活的按钮，则关闭侧边栏
-                if (activeButtons[side] === this) {
+                // if clicked button is currently active, close that area
+                if (activeButtons[side][position] === this) {
                     this.classList.remove('active');
-                    sidebar.classList.remove('open');
-                    // 清除内联样式,确保下次可以正常收起
-                    sidebar.style.width = '0';
-                    activeButtons[side] = null;
+                    activeButtons[side][position] = null;
                 } else {
-                    // 移除同侧其他按钮的激活状态
-                    if (activeButtons[side]) {
-                        activeButtons[side].classList.remove('active');
+                    // 移除同侧同位置其他按钮的激活状态
+                    if (activeButtons[side][position]) {
+                        activeButtons[side][position].classList.remove('active');
                     }
 
                     // 激活当前按钮
                     this.classList.add('active');
-                    sidebar.classList.add('open');
+                    activeButtons[side][position] = this;
 
-                    // 如果有保存的宽度,使用保存的宽度,否则使用默认宽度
-                    if (sidebarWidths[side]) {
-                        sidebar.style.width = sidebarWidths[side] + 'px';
-                    } else {
-                        sidebar.style.width = '250px';
-                    }
-
-                    activeButtons[side] = this;
-
-                    // 更新侧边栏内容
-                    updateSidebarContent(side, panel);
+                    // 更新该位置的内容
+                    updateSidebarContent(side, position, panel);
                 }
+
+                // 更新整个侧边栏的状态
+                updateSidebarState(side);
             });
         });
 
         // 更新侧边栏内容
-        function updateSidebarContent(side, panel) {
-            const content = document.getElementById(`${side}Content`);
+        function updateSidebarContent(side, position, panel) {
+            const contentId = `${side}Content${position.charAt(0).toUpperCase() + position.slice(1)}`;
+            const content = document.getElementById(contentId);
             const data = sidebarData[side][panel];
 
             let html = `<h3>${data.title}</h3>`;
@@ -471,6 +557,71 @@
             });
 
             content.innerHTML = html;
+        }
+
+        // 更新侧边栏整体状态
+        function updateSidebarState(side) {
+            const sidebar = document.getElementById(`${side}Sidebar`);
+            const contentTop = document.getElementById(`${side}ContentTop`);
+            const contentBottom = document.getElementById(`${side}ContentBottom`);
+            const verticalHandle = sidebar.querySelector('.vertical-resize-handle');
+
+            const hasTop = activeButtons[side].top !== null;
+            const hasBottom = activeButtons[side].bottom !== null;
+
+            // if both areas are inactive, close sidebar
+            if (!hasTop && !hasBottom) {
+                sidebar.classList.remove('open');
+                sidebar.style.width = '0';
+                contentTop.classList.remove('active', 'full-height');
+                contentBottom.classList.remove('active', 'full-height');
+                verticalHandle.classList.remove('active');
+                return;
+            }
+
+            // 打开侧边栏
+            sidebar.classList.add('open');
+            if (sidebarWidths[side]) {
+                sidebar.style.width = sidebarWidths[side] + 'px';
+            } else {
+                sidebar.style.width = '250px';
+            }
+
+            // 根据激活情况设置内容区域
+            if (hasTop && hasBottom) {
+                // 两个都激活 - 上下分区显示
+                contentTop.classList.add('active');
+                contentTop.classList.remove('full-height');
+                contentBottom.classList.add('active');
+                contentBottom.classList.remove('full-height');
+                verticalHandle.classList.add('active');
+
+                // 应用保存的分区高度
+                if (splitHeights[side]) {
+                    contentTop.style.height = splitHeights[side] + 'px';
+                    contentBottom.style.flex = '1';
+                } else {
+                    // 默认各占50%
+                    contentTop.style.height = '50%';
+                    contentBottom.style.flex = '1';
+                }
+            } else if (hasTop) {
+                // 只有上方激活 - 占满整个侧边栏
+                contentTop.classList.add('active', 'full-height');
+                contentBottom.classList.remove('active', 'full-height');
+                verticalHandle.classList.remove('active');
+                contentTop.style.height = '';
+                contentTop.style.flex = '';
+                contentBottom.style.flex = '';
+            } else {
+                // 只有下方激活 - 占满整个侧边栏
+                contentTop.classList.remove('active', 'full-height');
+                contentBottom.classList.add('active', 'full-height');
+                verticalHandle.classList.remove('active');
+                contentBottom.style.height = '';
+                contentTop.style.flex = '';
+                contentBottom.style.flex = '';
+            }
         }
 
         // 拖动调整侧边栏宽度
@@ -528,7 +679,76 @@
                         try {
                             localStorage.setItem('sidebarWidths', JSON.stringify(sidebarWidths));
                         } catch (e) {
-                            console.error('保存侧边栏宽度失败:', e);
+                            console.error('保存侧边栏宽度失败', e);
+                        }
+                    }
+                }
+            });
+        });
+
+        // 拖动调整上下分区高度
+        const verticalResizeHandles = document.querySelectorAll('.vertical-resize-handle');
+
+        verticalResizeHandles.forEach(handle => {
+            let isResizing = false;
+            let contentTop = null;
+            let contentBottom = null;
+            let startY = 0;
+            let startHeight = 0;
+            const side = handle.dataset.side;
+
+            handle.addEventListener('mousedown', function(e) {
+                // 只有当垂直手柄激活(两个区域都有内容)时才允许调整大小
+                if (!handle.classList.contains('active')) return;
+
+                contentTop = document.getElementById(`${side}ContentTop`);
+                contentBottom = document.getElementById(`${side}ContentBottom`);
+
+                isResizing = true;
+                startY = e.clientY;
+                startHeight = contentTop.offsetHeight;
+                handle.classList.add('dragging');
+
+                // 阻止文本选择
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+
+                const deltaY = e.clientY - startY;
+                const newHeight = startHeight + deltaY;
+
+                // 获取侧边栏总高度
+                const sidebar = document.getElementById(`${side}Sidebar`);
+                const totalHeight = sidebar.offsetHeight;
+
+                // 限制最小高度(两个区域至少各100px)
+                const minHeight = 100;
+                const maxHeight = totalHeight - minHeight - 4; // 4px is handle height
+
+                const clampedHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
+
+                // set top area height, bottom area auto fills remaining space
+                contentTop.style.height = clampedHeight + 'px';
+                contentBottom.style.flex = '1';
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    handle.classList.remove('dragging');
+
+                    // 保存当前高度
+                    if (contentTop) {
+                        const currentHeight = contentTop.offsetHeight;
+                        splitHeights[side] = currentHeight;
+
+                        // 保存到localStorage
+                        try {
+                            localStorage.setItem('splitHeights', JSON.stringify(splitHeights));
+                        } catch (e) {
+                            console.error('保存分区高度失败', e);
                         }
                     }
                 }
