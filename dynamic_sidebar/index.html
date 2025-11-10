@@ -46,7 +46,6 @@
             background-color: #3c3f41;
             color: #bbbbbb;
             overflow: hidden;
-            transition: width 0.3s ease;
             position: relative;
         }
 
@@ -78,7 +77,6 @@
             background-color: #3c3f41;
             color: #bbbbbb;
             overflow: hidden;
-            transition: width 0.3s ease;
             position: relative;
         }
 
@@ -399,6 +397,22 @@
             right: null
         };
 
+        // 保存侧边栏的自定义宽度
+        let sidebarWidths = {
+            left: null,
+            right: null
+        };
+
+        // 从localStorage加载保存的宽度
+        try {
+            const saved = localStorage.getItem('sidebarWidths');
+            if (saved) {
+                sidebarWidths = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.error('加载侧边栏宽度失败:', e);
+        }
+
         // 所有按钮
         const buttons = document.querySelectorAll('.icon-btn');
 
@@ -414,6 +428,8 @@
                 if (activeButtons[side] === this) {
                     this.classList.remove('active');
                     sidebar.classList.remove('open');
+                    // 清除内联样式,确保下次可以正常收起
+                    sidebar.style.width = '0';
                     activeButtons[side] = null;
                 } else {
                     // 移除同侧其他按钮的激活状态
@@ -424,6 +440,14 @@
                     // 激活当前按钮
                     this.classList.add('active');
                     sidebar.classList.add('open');
+
+                    // 如果有保存的宽度,使用保存的宽度,否则使用默认宽度
+                    if (sidebarWidths[side]) {
+                        sidebar.style.width = sidebarWidths[side] + 'px';
+                    } else {
+                        sidebar.style.width = '250px';
+                    }
+
                     activeButtons[side] = this;
 
                     // 更新侧边栏内容
@@ -484,10 +508,9 @@
                 }
 
                 // 限制最小和最大宽度
-                newWidth = Math.max(10, Math.min(newWidth, 600));
+                newWidth = Math.max(100, Math.min(newWidth, 600));
 
-                // 暂时禁用过渡效果以实现流畅拖动
-                sidebar.style.transition = 'none';
+                // 直接设置宽度
                 sidebar.style.width = newWidth + 'px';
             });
 
@@ -496,9 +519,17 @@
                     isResizing = false;
                     handle.classList.remove('dragging');
 
-                    // 恢复过渡效果
+                    // 保存当前宽度
                     if (sidebar) {
-                        sidebar.style.transition = 'width 0.3s ease';
+                        const currentWidth = sidebar.offsetWidth;
+                        sidebarWidths[side] = currentWidth;
+
+                        // 保存到localStorage
+                        try {
+                            localStorage.setItem('sidebarWidths', JSON.stringify(sidebarWidths));
+                        } catch (e) {
+                            console.error('保存侧边栏宽度失败:', e);
+                        }
                     }
                 }
             });

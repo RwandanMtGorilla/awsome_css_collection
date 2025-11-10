@@ -1,6 +1,9 @@
 # awsome_css_collection
 
-入口 https://github.com/chokcoco/iCSS
+此仓库存储我个人学习和实验html+css的一些巧妙用法
+
+
+学习资料入口 https://github.com/chokcoco/iCSS
 
 ## 这个不错 但是还没用上
 -  妙啊！纯 CSS 实现拼图游戏 https://github.com/chokcoco/iCSS/issues/197
