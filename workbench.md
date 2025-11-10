@@ -1293,3 +1293,6 @@ finishDragging	@	index.html:1004
 现在，请仔细思考，拆分任务，逐步认真修复以上提到的BUG
 
 不对 现在出了更大的问题 不论是否激活的按钮 拖到对面侧后 都无法正常激活 并提示 Panel "terminal" does not exist in "left" side
+请仔细思考！拆分任务，逐步认真修复以上提到的BUG
+
+####
